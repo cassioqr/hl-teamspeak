@@ -191,17 +191,135 @@ docker ps
 
 # Backup Strategy
 
+Backups are created directly from inside the container using Docker commands.
+
+This approach avoids Linux filesystem permission issues caused by container UID/GID mappings and keeps the backup workflow isolated from host-side permission conflicts.
+
+---
+
+## Backup Script
+
+```bash
+./backup.sh
+```
+
+---
+
+## Backup Features
+
+- Timestamped backups
+- Automatic backup directory creation
+- Backup generation inside container
+- Archive export using `docker cp`
+- Automatic cleanup of temporary files
+- Backup retention policy
+- Automatic deletion of old backups
+
+---
+
+## Backup Workflow
+
+```text
+TeamSpeak Container
+        |
+        | docker exec
+        v
+Temporary Archive (/tmp)
+        |
+        | docker cp
+        v
+Host Backup Directory
+```
+
+---
+
+## Backup Location
+
+```text
+~/backups/teamspeak
+```
+
+---
+
+## Retention Policy
+
+Current retention period:
+
+```text
+14 days
+```
+
+Older backups are automatically removed by the backup script.
+
+---
+
+## Backup Design Decision
+
+Instead of backing up bind-mounted files directly from the host filesystem, backups are generated from inside the container using Docker tooling.
+
+### Reasons
+
+- Avoid Linux UID/GID permission conflicts
+- Maintain container ownership consistency
+- Improve portability
+- Reduce host filesystem dependency
+- Simplify operational workflows
+- Prevent permission-related backup failures
+
+---
+
 ## Manual Backup
 
 ```bash
-tar -czf ts-backup.tar.gz data/
+./backup.sh
 ```
 
-## Restore Backup
+---
+
+## Restore Procedure
+
+### 1. Stop the container
 
 ```bash
-tar -xzf ts-backup.tar.gz
+docker compose down
 ```
+
+---
+
+### 2. Extract the backup
+
+```bash
+tar -xzf teamspeak_backup_DATE.tar.gz
+```
+
+---
+
+### 3. Restore TeamSpeak data
+
+Restore the extracted `ts3server` files into the persistent storage directory.
+
+---
+
+### 4. Start the container
+
+```bash
+docker compose up -d
+```
+
+---
+
+## Troubleshooting
+
+### Permission Issues During Backup
+
+The TeamSpeak container creates files using its internal UID/GID.
+
+Direct host-side backups may fail due to restricted Linux filesystem permissions.
+
+### Solution
+
+- Create backups from inside the container using `docker exec`
+- Export archives using `docker cp`
 
 ---
 
@@ -279,19 +397,6 @@ Benefits:
 
 ---
 
-# Monitoring
-
-## Recommended Tools
-
-| Tool | Purpose |
-|---|---|
-| Uptime Kuma | Uptime monitoring |
-| Netdata | Real-time metrics |
-| Grafana | Dashboards |
-| Prometheus | Metrics collection |
-
----
-
 # Troubleshooting
 
 ## Container Not Running
@@ -354,14 +459,11 @@ Infrastructure should become operational within minutes.
 
 ## Planned Enhancements
 
-- Automated backups
 - CI/CD pipeline
 - GitHub Actions
 - Monitoring stack
-- Reverse proxy infrastructure
 - Multi-service orchestration
 - Infrastructure bootstrap scripts
-- Centralized logging
 
 ---
 
@@ -387,8 +489,8 @@ This homelab project aims to:
 | Persistent Storage | Operational |
 | Host Networking | Operational |
 | Git Versioning | Operational |
-| Port Forwarding | Pending |
+| Port Forwarding | Operational |
 | Monitoring | Planned |
-| Automated Backups | Planned |
+| Automated Backups | Operational |
 
 
