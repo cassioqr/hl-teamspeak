@@ -1,0 +1,14 @@
+services:
+  teamspeak:
+    image: teamspeak:latest
+    container_name: teamspeak
+
+    network_mode: host
+
+    restart: unless-stopped
+
+    environment:
+      TS3SERVER_LICENSE: accept
+
+    volumes:
+      - ./data:/var/ts3server
