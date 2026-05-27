@@ -1,2 +1,4 @@
 data/
+backups/
 *.tar.gz
+.env
